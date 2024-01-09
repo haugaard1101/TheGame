@@ -1,28 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Animated, { Easing } from 'react-native-reanimated';
+import { database } from "./firebase";
+import { updateDoc, doc } from "firebase/firestore";
 
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
+
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const cardImages = [
-  { src: "game_assets/chili.png", matched: false},
-  { src: "game_assets/grapes.png", matched: false},
-  { src: "game_assets/lemon.png", matched: false},
-  { src: "game_assets/pineapple.png", matched: false},
-  { src: "game_assets/strawberry.png", matched: false},
-  { src: "game_assets/watermelon.png", matched: false}
+  { src: "game_assets/chili.png", matched: false },
+  { src: "game_assets/grapes.png", matched: false },
+  { src: "game_assets/lemon.png", matched: false },
+  { src: "game_assets/pineapple.png", matched: false },
+  { src: "game_assets/strawberry.png", matched: false },
+  { src: "game_assets/watermelon.png", matched: false },
 ];
 
 export default function App() {
+  const bestRoundId = "O9GGkzXkip3PklI6aDt9";
+
   const [cards, setCards] = useState([]);
   const [turns, setTurns] = useState(0);
-  const [choiceOne, setChoiceOne] = useState(null)
-  const [choiceTwo, setChoiceTwo] = useState(null)
+  const [choiceOne, setChoiceOne] = useState(null);
+  const [choiceTwo, setChoiceTwo] = useState(null);
+  const [bestRound, setBestRound] = useState(0);
+
+  async function updateBestRound() {
+    await updateDoc(doc(database, "GameData", bestRoundId), {
+      Turns: turns,
+    });
+    setBestRound(turns);
+  }
 
   //handles choices
   const handleChoice = (card) => {
-    choiceOne ? setChoiceTwo(card) : setChoiceOne(card)
+    choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
   };
 
   //compares cards
@@ -31,9 +43,7 @@ export default function App() {
       if (choiceOne.src === choiceTwo.src) {
         setCards((prevCards) =>
           prevCards.map((card) =>
-            card.src === choiceOne.src
-              ? { ...card, matched: true }
-              : card
+            card.src === choiceOne.src ? { ...card, matched: true } : card
           )
         );
         resetTurn();
@@ -44,33 +54,32 @@ export default function App() {
           );
           setCards(updatedCards);
           resetTurn();
-        }, 600); 
+        }, 600);
       }
     }
   }, [choiceOne, choiceTwo]);
-
-  console.log(cards)
 
   //shuffle cards
   const shuffleCards = () => {
     const shuffledCards = [...cardImages, ...cardImages]
       .sort(() => Math.random() - 0.5)
       .map((card, index) => ({ ...card, id: index, flipped: false }));
-
     setCards(shuffledCards);
+
+    if (bestRound == 0 || bestRound > turns) {
+      updateBestRound();
+      console.log(bestRound);
+    }
+
     setTurns(0);
   };
 
   //reset choices and increase turns
   const resetTurn = () => {
-    setChoiceOne(null)
-    setChoiceTwo(null)
-    setTurns(prevTurns => prevTurns + 1)
-  }
-
-  useEffect(() => {
-    shuffleCards();
-  }, []);
+    setChoiceOne(null);
+    setChoiceTwo(null);
+    setTurns((prevTurns) => prevTurns + 1);
+  };
 
   //flips cards
   const flipCard = (cardId) => {
@@ -84,11 +93,10 @@ export default function App() {
     setCards(updatedCards);
     handleChoice(updatedCards.find((card) => card.id === cardId));
   };
-  
 
   const HomePage = ({ navigation }) => {
     function switchPageButton() {
-      navigation.navigate('GamePage', { shuffleCards });
+      navigation.navigate("GamePage", { shuffleCards });
     }
 
     return (
@@ -97,6 +105,7 @@ export default function App() {
         <TouchableOpacity onPress={switchPageButton}>
           <Text>GamePage</Text>
         </TouchableOpacity>
+        <Text>Best Round: {bestRound}</Text>
       </View>
     );
   };
@@ -105,18 +114,15 @@ export default function App() {
     const { shuffleCards } = route.params || {};
 
     function shuffleCardsButton() {
-      if (shuffleCards) {
-        shuffleCards();
-      } else {
-        console.log('Function not found');
-      }
+      resetTurn();
+      shuffleCards();
     }
 
     return (
       <View style={styles.container}>
         <Text style={styles.headerText}>GamePage</Text>
         <TouchableOpacity onPress={shuffleCardsButton}>
-          <Text>Shuffle Cards</Text>
+          <Text>New Game</Text>
         </TouchableOpacity>
 
         <View style={styles.cardGrid}>
@@ -127,16 +133,17 @@ export default function App() {
               onPress={() => flipCard(card.id)}
             >
               <Image
-            source={
-              card.flipped || card.matched
-                ? { uri: card.src }
-                : require('./game_assets/cover.png')
-            }
-            style={styles.cardImage}
-          />
+                source={
+                  card.flipped || card.matched
+                    ? { uri: card.src }
+                    : require("./game_assets/cover.png")
+                }
+                style={styles.cardImage}
+              />
             </TouchableOpacity>
           ))}
         </View>
+        <Text>Turns: {turns}</Text>
       </View>
     );
   };
@@ -145,9 +152,9 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName='HomePage'>
-        <Stack.Screen name='HomePage' component={HomePage} />
-        <Stack.Screen name='GamePage' component={GamePage} />
+      <Stack.Navigator initialRouteName="HomePage">
+        <Stack.Screen name="HomePage" component={HomePage} />
+        <Stack.Screen name="GamePage" component={GamePage} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -156,33 +163,33 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
   },
   headerText: {
     fontSize: 24,
     marginBottom: 20,
   },
   cardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     marginTop: 20,
   },
   card: {
     width: 80,
     height: 100,
     margin: 5,
-    backgroundColor: 'lightblue',
+    backgroundColor: "lightblue",
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 5,
   },
   cardImage: {
     width: 50,
     height: 50,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
 });
