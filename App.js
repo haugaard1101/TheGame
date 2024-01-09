@@ -1,9 +1,7 @@
 import { database } from "./firebase";
 import { updateDoc, doc } from "firebase/firestore";
-
 import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
-
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -17,7 +15,7 @@ const cardImages = [
 ];
 
 export default function App() {
-  const bestRoundId = "O9GGkzXkip3PklI6aDt9";
+  const bestRoundId = "O9GGkzXkip3PklI6aDt9"; // Replace with your specific document ID
 
   const [cards, setCards] = useState([]);
   const [turns, setTurns] = useState(0);
@@ -29,15 +27,12 @@ export default function App() {
     await updateDoc(doc(database, "GameData", bestRoundId), {
       Turns: turns,
     });
-    setBestRound(turns);
   }
 
-  //handles choices
   const handleChoice = (card) => {
     choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
   };
 
-  //compares cards
   useEffect(() => {
     if (choiceOne && choiceTwo) {
       if (choiceOne.src === choiceTwo.src) {
@@ -59,29 +54,28 @@ export default function App() {
     }
   }, [choiceOne, choiceTwo]);
 
-  //shuffle cards
+  //NOT WORKING, doesn't update properly
   const shuffleCards = () => {
     const shuffledCards = [...cardImages, ...cardImages]
       .sort(() => Math.random() - 0.5)
       .map((card, index) => ({ ...card, id: index, flipped: false }));
     setCards(shuffledCards);
-
+  
     if (bestRound == 0 || bestRound > turns) {
+      setBestRound(turns);
       updateBestRound();
       console.log(bestRound);
     }
-
+  
     setTurns(0);
   };
 
-  //reset choices and increase turns
   const resetTurn = () => {
     setChoiceOne(null);
     setChoiceTwo(null);
     setTurns((prevTurns) => prevTurns + 1);
   };
 
-  //flips cards
   const flipCard = (cardId) => {
     const selectedCard = cards.find((card) => card.id === cardId);
     if (selectedCard.matched || selectedCard.flipped) {
@@ -102,10 +96,10 @@ export default function App() {
     return (
       <View style={styles.container}>
         <Text style={styles.headerText}>Fruit Match</Text>
-        <TouchableOpacity onPress={switchPageButton}>
-          <Text>GamePage</Text>
+        <TouchableOpacity style={styles.button} onPress={switchPageButton}>
+          <Text style={styles.buttonText}>Start Game</Text>
         </TouchableOpacity>
-        <Text>Best Round: {bestRound}</Text>
+        <Text style={styles.bestRoundText}>Best Round: {bestRound}</Text>
       </View>
     );
   };
@@ -120,9 +114,9 @@ export default function App() {
 
     return (
       <View style={styles.container}>
-        <Text style={styles.headerText}>GamePage</Text>
-        <TouchableOpacity onPress={shuffleCardsButton}>
-          <Text>New Game</Text>
+        <Text style={styles.headerText}>Fruit Match</Text>
+        <TouchableOpacity style={styles.button} onPress={shuffleCardsButton}>
+          <Text style={styles.buttonText}>New Round</Text>
         </TouchableOpacity>
 
         <View style={styles.cardGrid}>
@@ -143,7 +137,7 @@ export default function App() {
             </TouchableOpacity>
           ))}
         </View>
-        <Text>Turns: {turns}</Text>
+        <Text style={styles.turnsText}>Turns: {turns}</Text>
       </View>
     );
   };
@@ -165,11 +159,29 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#F0F0F0",
   },
   headerText: {
     fontSize: 24,
     marginBottom: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  button: {
+    backgroundColor: "#5cb85c",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  bestRoundText: {
+    fontSize: 18,
+    color: "#333",
   },
   cardGrid: {
     flexDirection: "row",
@@ -181,7 +193,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 100,
     margin: 5,
-    backgroundColor: "lightblue",
+    backgroundColor: "#fff",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
@@ -191,5 +203,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     resizeMode: "contain",
+  },
+  turnsText: {
+    fontSize: 18,
+    color: "#333",
   },
 });
