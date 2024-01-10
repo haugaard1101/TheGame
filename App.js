@@ -29,9 +29,13 @@ export default function App() {
     });
   }
 
+
+
+    //LOGIC
   const handleChoice = (card) => {
     choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
   };
+
 
   useEffect(() => {
     if (choiceOne && choiceTwo) {
@@ -54,7 +58,7 @@ export default function App() {
     }
   }, [choiceOne, choiceTwo]);
 
-  //NOT WORKING, doesn't update properly
+        //HALF WORKING, doesn't update properly
   const shuffleCards = () => {
     const shuffledCards = [...cardImages, ...cardImages]
       .sort(() => Math.random() - 0.5)
@@ -70,11 +74,13 @@ export default function App() {
     setTurns(0);
   };
 
+
   const resetTurn = () => {
     setChoiceOne(null);
     setChoiceTwo(null);
     setTurns((prevTurns) => prevTurns + 1);
   };
+
 
   const flipCard = (cardId) => {
     const selectedCard = cards.find((card) => card.id === cardId);
@@ -88,6 +94,8 @@ export default function App() {
     handleChoice(updatedCards.find((card) => card.id === cardId));
   };
 
+
+    //HOME AND GAME PAGES
   const HomePage = ({ navigation }) => {
     function switchPageButton() {
       navigation.navigate("GamePage", { shuffleCards });
@@ -103,6 +111,7 @@ export default function App() {
       </View>
     );
   };
+
 
   const GamePage = ({ route }) => {
     const { shuffleCards } = route.params || {};
@@ -142,8 +151,8 @@ export default function App() {
     );
   };
 
-  const Stack = createNativeStackNavigator();
 
+  const Stack = createNativeStackNavigator();
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="HomePage">
