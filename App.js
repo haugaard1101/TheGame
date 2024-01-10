@@ -1,7 +1,9 @@
 import { database } from "./firebase";
 import { updateDoc, doc } from "firebase/firestore";
+import axios from "axios";
+
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text, Image, TouchableOpacity, TextInput } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -16,6 +18,11 @@ const cardImages = [
 
 export default function App() {
   const bestRoundId = "O9GGkzXkip3PklI6aDt9"; // Replace with your specific document ID
+  const API_KEY = "AIzaSyB1I3RuP6_tNdJMwtk-T48O6ozDJyPow8k";
+  const url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=";
+  const urlSignUp = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key="
+  const [enteredEmail, setEnteredEmail] = useState('123@123.dk');
+  const [enteredPassword, setEnteredPassword] = useState('123123');
 
   const [cards, setCards] = useState([]);
   const [turns, setTurns] = useState(0);
@@ -23,12 +30,44 @@ export default function App() {
   const [choiceTwo, setChoiceTwo] = useState(null);
   const [bestRound, setBestRound] = useState(0);
 
+
+
+    //FIREBASE STUFF
   async function updateBestRound() {
     await updateDoc(doc(database, "GameData", bestRoundId), {
       Turns: turns,
     });
   }
 
+
+  async function login() {
+    try {
+      const response = await axios.post(url + API_KEY , {
+        email: enteredEmail,
+        password: enteredPassword,
+        returnSecureToken:true
+      })
+      alert("logged in: " + response.data.idToken)
+
+    } catch (error) {
+        alert("login failed: " + error.response.data.error.errors[0].message)
+    }
+  }
+
+
+  async function signUp() {
+    try {
+      const response = await axios.post(urlSignUp + API_KEY , {
+        email: enteredEmail,
+        password: enteredPassword,
+        returnSecureToken:true
+      })
+      alert("new account created: " + response.data.idToken)
+
+    } catch (error) {
+        alert("sign up failed: " + error.response.data.error.errors[0].message)
+    }
+  }
 
 
     //LOGIC
@@ -65,7 +104,7 @@ export default function App() {
       .map((card, index) => ({ ...card, id: index, flipped: false }));
     setCards(shuffledCards);
   
-    if (bestRound == 0 || bestRound > turns) {
+    if (bestRound === 0 || bestRound > turns) {
       setBestRound(turns);
       updateBestRound();
       console.log(bestRound);
@@ -108,6 +147,28 @@ export default function App() {
           <Text style={styles.buttonText}>Start Game</Text>
         </TouchableOpacity>
         <Text style={styles.bestRoundText}>Best Round: {bestRound}</Text>
+        <TouchableOpacity style={styles.button} onPress={signUp}>
+          <Text style={styles.buttonText}>Sign up</Text>
+        </TouchableOpacity>
+        <TextInput
+          onChangeText={newText => setEnteredEmail(newText)}
+          value={enteredEmail}
+        ></TextInput>
+        <TextInput
+          onChangeText={newText => setEnteredPassword(newText)}
+          value={enteredPassword}
+        ></TextInput>
+        <TouchableOpacity style={styles.button} onPress={login}>
+          <Text style={styles.buttonText}>Log in</Text>
+        </TouchableOpacity>
+        <TextInput
+          onChangeText={newText => setEnteredEmail(newText)}
+          value={enteredEmail}
+        ></TextInput>
+        <TextInput
+          onChangeText={newText => setEnteredPassword(newText)}
+          value={enteredPassword}
+        ></TextInput>
       </View>
     );
   };
